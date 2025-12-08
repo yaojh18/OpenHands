@@ -1,0 +1,20 @@
+# Example configuration for SWEBench-Multimodal with Jest and Playwright testing
+# Copy this to config.toml and adjust as needed
+
+[agent]
+# Enable Jest for JavaScript/TypeScript testing
+enable_jest = true
+
+# Enable Playwright for visual/UI testing
+enable_playwright = true
+
+# Other recommended settings for SWEBench-Multimodal
+enable_cmd = true
+enable_jupyter = true
+enable_editor = true
+enable_browsing = false  # Usually not needed for SWEBench
+
+[llm]
+# Configure your LLM settings here
+model = "gpt-4"
+api_key = "your-api-key-here"

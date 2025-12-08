@@ -189,6 +189,10 @@ def get_instance_docker_image(
             docker_image_prefix = 'docker.io/swebench/'
         elif DATASET_TYPE == 'SWE-rebench':
             docker_image_prefix = 'docker.io/swerebench/'
+        elif DATASET_TYPE == 'Multimodal':
+            docker_image_prefix = 'docker.io/swebench/'
+        else:
+            docker_image_prefix = DEFAULT_DOCKER_IMAGE_PREFIX
         repo, name = instance_id.split('__')
         image_name = f'{docker_image_prefix.rstrip("/")}/sweb.eval.x86_64.{repo}_1776_{name}:latest'.lower()
         logger.debug(f'Using official SWE-Bench image: {image_name}')
@@ -802,9 +806,10 @@ if __name__ == '__main__':
     llm_config = None
     if args.llm_config:
         llm_config = get_llm_config_arg(args.llm_config, args.config_file)
-        llm_config.log_completions = True
-        # modify_params must be False for evaluation purpose, for reproducibility and accurancy of results
-        llm_config.modify_params = False
+        if llm_config is not None:
+            llm_config.log_completions = True
+            # modify_params must be False for evaluation purpose, for reproducibility and accurancy of results
+            llm_config.modify_params = False
 
     if llm_config is None:
         raise ValueError(f'Could not find LLM config: --llm_config {args.llm_config}')

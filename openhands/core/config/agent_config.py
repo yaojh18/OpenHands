@@ -53,6 +53,10 @@ class AgentConfig(BaseModel):
     """Whether to enable plan mode, which uses the long horizon system message and add the new tool - task_tracker - for planning, tracking and executing complex tasks."""
     enable_stuck_detection: bool = Field(default=True)
     """Whether to enable stuck/loop detection. When disabled, the agent will not automatically detect and recover from loops."""
+    enable_jest: bool = Field(default=False)
+    """Whether to enable Jest testing tool for JavaScript/TypeScript code."""
+    enable_playwright: bool = Field(default=False)
+    """Whether to enable Playwright testing tool for visual/UI testing."""
     condenser: CondenserConfig = Field(
         # The default condenser is set to the conversation window condenser -- if
         # we use NoOp and the conversation hits the LLM context length limit,
@@ -75,7 +79,10 @@ class AgentConfig(BaseModel):
         Returns the appropriate system prompt filename based on the agent configuration.
         When enable_plan_mode is True, automatically uses the long horizon system prompt
         unless a custom system_prompt_filename was explicitly set (not the default).
+        For SWEBench-Multimodal with Jest/Playwright enabled, uses multimodal system prompt.
         """
+        if (self.enable_jest or self.enable_playwright) and self.system_prompt_filename == 'system_prompt.j2':
+            return 'system_prompt_multimodal.j2'
         if self.enable_plan_mode and self.system_prompt_filename == 'system_prompt.j2':
             return 'system_prompt_long_horizon.j2'
         return self.system_prompt_filename

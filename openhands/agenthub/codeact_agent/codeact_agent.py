@@ -19,7 +19,9 @@ from openhands.agenthub.codeact_agent.tools.condensation_request import (
 )
 from openhands.agenthub.codeact_agent.tools.finish import FinishTool
 from openhands.agenthub.codeact_agent.tools.ipython import IPythonTool
+from openhands.agenthub.codeact_agent.tools.jest import JestTool
 from openhands.agenthub.codeact_agent.tools.llm_based_edit import LLMBasedFileEditTool
+from openhands.agenthub.codeact_agent.tools.playwright import PlaywrightTool
 from openhands.agenthub.codeact_agent.tools.str_replace_editor import (
     create_str_replace_editor_tool,
 )
@@ -150,6 +152,10 @@ class CodeActAgent(Agent):
                     runtime_type=self.config.runtime,
                 )
             )
+        if self.config.enable_jest:
+            tools.append(JestTool)
+        if self.config.enable_playwright:
+            tools.append(PlaywrightTool)
         return tools
 
     def reset(self) -> None:
