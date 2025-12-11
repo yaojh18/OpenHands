@@ -189,6 +189,10 @@ def get_instance_docker_image(
             docker_image_prefix = 'docker.io/swebench/'
         elif DATASET_TYPE == 'SWE-rebench':
             docker_image_prefix = 'docker.io/swerebench/'
+        elif DATASET_TYPE == 'Multimodal':
+            docker_image_prefix = 'docker.io/swebench/'
+        else:
+            docker_image_prefix = DEFAULT_DOCKER_IMAGE_PREFIX
         repo, name = instance_id.split('__')
         image_name = f'{docker_image_prefix.rstrip("/")}/sweb.eval.x86_64.{repo}_1776_{name}:latest'.lower()
         logger.debug(f'Using official SWE-Bench image: {image_name}')

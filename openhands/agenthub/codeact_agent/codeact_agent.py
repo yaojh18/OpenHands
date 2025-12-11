@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 from collections import deque
 from typing import TYPE_CHECKING
 
@@ -17,6 +18,10 @@ from openhands.agenthub.codeact_agent.tools.browser import BrowserTool
 from openhands.agenthub.codeact_agent.tools.condensation_request import (
     CondensationRequestTool,
 )
+from openhands.agenthub.codeact_agent.tools.critic import (
+    CriticTool,
+    CRITIC_TOOL_NAME,
+)
 from openhands.agenthub.codeact_agent.tools.finish import FinishTool
 from openhands.agenthub.codeact_agent.tools.ipython import IPythonTool
 from openhands.agenthub.codeact_agent.tools.llm_based_edit import LLMBasedFileEditTool
@@ -32,7 +37,7 @@ from openhands.controller.state.state import State
 from openhands.core.config import AgentConfig
 from openhands.core.logger import openhands_logger as logger
 from openhands.core.message import Message
-from openhands.events.action import AgentFinishAction, MessageAction
+from openhands.events.action import AgentFinishAction, MessageAction, AgentDelegateAction
 from openhands.events.event import Event
 from openhands.llm.llm_utils import check_tools
 from openhands.memory.condenser import Condenser
@@ -150,6 +155,8 @@ class CodeActAgent(Agent):
                     runtime_type=self.config.runtime,
                 )
             )
+        if self.config.enable_critic:
+            tools.append(CriticTool)
         return tools
 
     def reset(self) -> None:
@@ -219,6 +226,29 @@ class CodeActAgent(Agent):
         response = self.llm.completion(**params)
         logger.debug(f'Response from LLM: {response}')
         actions = self.response_to_actions(response)
+
+        if response.choices and response.choices[0].message.tool_calls:
+            for tool_call in response.choices[0].message.tool_calls:
+                if tool_call.function.name == CRITIC_TOOL_NAME:
+                    logger.info(f"Intercepted Critic Tool Call: {tool_call.function.name}")
+                    try:
+                        args = json.loads(tool_call.function.arguments)
+                    except json.JSONDecodeError:
+                        logger.warning(f"Failed to parse arguments for critic tool: {tool_call.function.arguments}")
+                        args = {}
+
+                    delegate_action = AgentDelegateAction(
+                        agent='CriticAgent',
+                        inputs={
+                            "task": (
+                                f"Review Request from Developer:\n"
+                                f"Summary of Changes: {args.get('summary_of_changes', 'N/A')}\n"
+                                f"Verification Instructions: {args.get('verification_instructions', 'N/A')}"
+                            )
+                        }
+                    )
+                    actions.append(delegate_action)
+
         logger.debug(f'Actions after response_to_actions: {actions}')
         for action in actions:
             self.pending_actions.append(action)
